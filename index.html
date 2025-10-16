@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>غدير للحسابات | PIN آمن</title>
+  <title>غدير للحسابات | تسجيل دخول آمن</title>
   <link rel="stylesheet" href="assets/css/theme.css">
   <link rel="manifest" href="manifest.json">
-  <script src="assets/js/crypto.js" defer></script>
+  <script src="assets/js/Crypto.js" defer></script>
   <script src="assets/js/app.js" defer></script>
 </head>
 <body>
@@ -15,8 +15,8 @@
       <div class="brand">
         <div class="logo">GL</div>
         <div>
-          <h1>غدير للحسابات — فتح بواسطة PIN</h1>
-          <div class="muted">البيانات تُشفّر محليًا. افتحها برمز من 4–8 أرقام.</div>
+          <h1>غدير للحسابات — تسجيل دخول محلي</h1>
+          <div class="muted">البيانات تُشفّر محليًا. افتحها باسم المستخدم وكلمة المرور.</div>
         </div>
       </div>
       <nav id="tabs" class="hidden">
@@ -33,25 +33,15 @@
     <!-- Gate (PIN) -->
     <div id="gate" class="gate">
       <div class="panel">
-        <h2 id="gateTitle">إنشاء PIN</h2>
-        <p id="gateDesc" class="muted">أول مرة؟ اختر رمزًا رقميًا من 4 إلى 8 أرقام.</p>
+        <h2 id="gateTitle">تسجيل الدخول لأول مرة</h2>
+        <p id="gateDesc" class="muted">استخدم اسم المستخدم وكلمة المرور الافتراضية.</p>
 
-        <div id="newPinFields">
-          <label>PIN</label>
-          <input id="newPin" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="مثال: 123456" />
-          <label>تأكيد PIN</label>
-          <input id="newPin2" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="أعد الإدخال" />
-        </div>
-
-        <div id="unlockFields" class="hidden">
-          <label>أدخل PIN</label>
-          <input id="unlockPin" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" />
-          <div class="keypad">
-            <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
-            <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
-            <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-            <button data-k="del">⌫</button><button data-k="0">0</button><button data-k="clr">⟲</button>
-          </div>
+        <div id="loginFields">
+          <label>اسم المستخدم</label>
+          <input id="loginUser" autocomplete="username" placeholder="مثال: star" />
+          <label>كلمة المرور</label>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="مثال: ******" />
+          <p class="muted small">البيانات الافتراضية: <strong>star</strong> / <strong>star1996@</strong></p>
         </div>
 
         <div class="actions">
@@ -60,7 +50,7 @@
           <button class="btn danger" id="resetAll">مسح كل البيانات</button>
         </div>
         <p class="muted small">
-          ⚠️ لا يمكن استرجاع الـ PIN عند فقدانه. للتأمين ضد الاختراق جرّب 6 أرقام أو أكثر.
+          ⚠️ غيّر كلمة المرور من الكود المصدري إذا لزم الأمر واحتفظ بها في مكان آمن.
         </p>
         <input id="filePicker" type="file" accept=".json" class="hidden" />
       </div>

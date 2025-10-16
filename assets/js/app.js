@@ -1,10 +1,12 @@
-// app.js — Secure accounting with PIN unlock (4–8 digits)
-const LS_KEY = 'ghadeer.sec.pin.v1';
+// app.js — Secure accounting with username/password unlock
+const LS_KEY = 'ghadeer.sec.auth.v1';
+const AUTH_USERNAME = 'star';
+const AUTH_PASSWORD = 'star1996@';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 
 let decryptedState = null;
-let pinCache = null;
+let secretCache = null;
 
 const defaultState = {
   clients: {},
@@ -14,21 +16,21 @@ const defaultState = {
 
 function hasEncryptedState(){ try{ return !!localStorage.getItem(LS_KEY); }catch{ return false; } }
 async function saveEncrypted(){
-  if(!pinCache || !decryptedState) return;
+  if(!secretCache || !decryptedState) return;
   decryptedState._ts = Date.now();
-  const bundle = await GCrypto.aesEncryptJson(decryptedState, pinCache);
+  const bundle = await GCrypto.aesEncryptJson(decryptedState, secretCache);
   localStorage.setItem(LS_KEY, JSON.stringify(bundle));
 }
-async function firstTimeCreate(pin){
-  const bundle = await GCrypto.aesEncryptJson(defaultState, pin);
+async function firstTimeCreate(secret){
+  const bundle = await GCrypto.aesEncryptJson(defaultState, secret);
   localStorage.setItem(LS_KEY, JSON.stringify(bundle));
-  pinCache = pin;
+  secretCache = secret;
   decryptedState = JSON.parse(JSON.stringify(defaultState));
 }
-async function unlock(pin){
+async function unlock(secret){
   const bundle = JSON.parse(localStorage.getItem(LS_KEY));
-  decryptedState = await GCrypto.aesDecryptJson(bundle, pin);
-  pinCache = pin;
+  decryptedState = await GCrypto.aesDecryptJson(bundle, secret);
+  secretCache = secret;
 }
 
 // helpers
@@ -48,41 +50,23 @@ function safeFile(s=''){ return s.replace(/[^-\w]+/g,'_'); }
 window.addEventListener('DOMContentLoaded', ()=>{
   const gate = $('#gate'); const tabs = $('#tabs'); const app = $('#app');
   if(!hasEncryptedState()){
-    $('#gateTitle').textContent = 'إنشاء PIN';
-    $('#gateDesc').textContent = 'أول استخدام — اختر رمزًا من 4 إلى 8 أرقام.';
-    $('#newPinFields').classList.remove('hidden');
-    $('#unlockFields').classList.add('hidden');
+    $('#gateTitle').textContent = 'تسجيل الدخول لأول مرة';
+    $('#gateDesc').textContent = 'استخدم اسم المستخدم وكلمة المرور الافتراضية لتهيئة قاعدة البيانات.';
   }else{
-    $('#gateTitle').textContent = 'إدخال PIN';
-    $('#gateDesc').textContent = 'أدخل الرمز لفتح قاعدة البيانات.';
-    $('#newPinFields').classList.add('hidden');
-    $('#unlockFields').classList.remove('hidden');
+    $('#gateTitle').textContent = 'تسجيل الدخول';
+    $('#gateDesc').textContent = 'أدخل اسم المستخدم وكلمة المرور لفتح قاعدة البيانات.';
   }
-
-  // keypad
-  $$('#unlockFields .keypad button').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      const inp = $('#unlockPin');
-      const k = b.getAttribute('data-k');
-      if(k==='del'){ inp.value = inp.value.slice(0,-1); return; }
-      if(k==='clr'){ inp.value = ''; return; }
-      if(inp.value.length < 8 && /\d/.test(k)) inp.value += k;
-    });
-  });
 
   $('#gateConfirm').addEventListener('click', async ()=>{
     try{
-      if(!hasEncryptedState()){
-        const p1 = ($('#newPin').value||'').trim();
-        const p2 = ($('#newPin2').value||'').trim();
-        if(!/^\d{4,8}$/.test(p1)) return alert('أدخل PIN من 4 إلى 8 أرقام.');
-        if(p1 !== p2) return alert('الرمزان غير متطابقين.');
-        await firstTimeCreate(p1);
-      }else{
-        const pin = ($('#unlockPin').value||'').trim();
-        if(!/^\d{4,8}$/.test(pin)) return alert('PIN غير صالح.');
-        await unlock(pin);
+      const username = ($('#loginUser').value||'').trim();
+      const password = $('#loginPass').value || '';
+      if(username !== AUTH_USERNAME || password !== AUTH_PASSWORD){
+        alert('بيانات تسجيل الدخول غير صحيحة.');
+        return;
       }
+      if(!hasEncryptedState()) await firstTimeCreate(password);
+      else await unlock(password);
       // init UI
       $('#t_date').value = today();
       $('#p_date').value = today();
@@ -91,7 +75,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
       $('#localeSelect').value = decryptedState.settings.locale || 'en-US';
       renderAll();
       gate.classList.add('hidden'); app.classList.remove('hidden'); tabs.classList.remove('hidden');
-    }catch(e){ console.error(e); alert('PIN غير صحيح أو البيانات تالفة.'); }
+    }catch(e){ console.error(e); alert('بيانات تسجيل الدخول غير صحيحة أو البيانات تالفة.'); }
   });
 
   $('#importEnc').addEventListener('click', ()=>{
@@ -103,7 +87,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
           const j = JSON.parse(r.result);
           if(!j.cipher || !j.iv || !j.salt) throw new Error('bad');
           localStorage.setItem(LS_KEY, JSON.stringify(j));
-          alert('تم الاستيراد — أدخل الـ PIN الخاص بهذه النسخة.'); location.reload();
+          alert('تم الاستيراد — أدخل اسم المستخدم وكلمة المرور الخاصة بهذه النسخة.'); location.reload();
         }catch{ alert('ملف غير صالح.'); }
       };
       r.readAsText(f, 'utf-8');
@@ -275,8 +259,10 @@ $('#exportAllBtn').addEventListener('click', ()=>{
   a.href=url; a.download='ghadeer_encrypted_backup.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 });
 $('#lockBtn').addEventListener('click', ()=>{
-  $('#gateTitle').textContent = 'إدخال PIN'; $('#gateDesc').textContent='أدخل الرمز لفتح قاعدة البيانات.';
-  $('#newPinFields').classList.add('hidden'); $('#unlockFields').classList.remove('hidden');
+  $('#gateTitle').textContent = 'تسجيل الدخول';
+  $('#gateDesc').textContent='أدخل اسم المستخدم وكلمة المرور لفتح قاعدة البيانات.';
+  $('#loginUser').value='';
+  $('#loginPass').value='';
   $('#gate').classList.remove('hidden');
 });
 

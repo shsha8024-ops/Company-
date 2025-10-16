@@ -22,7 +22,7 @@ self.addEventListener('activate',event=>{
       .then(keys=>
         Promise.all(
           keys
-            .filter(key=>!allowList.has(key)&&legacySet.has(key))
+            .filter(key=>legacySet.has(key)&&!allowList.has(key))
             .map(key=>caches.delete(key))
         )
       )
